@@ -83,7 +83,10 @@ with gr.Blocks(title="Code Doc Search") as demo:
     repo_state = gr.State(None)
 
     gr.Markdown("Code Documentation Search")
-    gr.Markdown("Paste any public GitHub repository URL, then ask questions about that codebase.")
+    gr.Markdown(
+        "Paste any public GitHub repository URL, then ask questions about that codebase. "
+        "Answers are always returned in English."
+    )
 
     repo_url = gr.Textbox(
         label="GitHub Repository URL",
