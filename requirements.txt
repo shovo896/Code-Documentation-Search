@@ -6,3 +6,4 @@ pinecone-client
 gradio
 PyGithub
 python-dotenv
+GitPython
