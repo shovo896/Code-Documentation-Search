@@ -162,10 +162,9 @@ if __name__ == "__main__":
     demo.queue(default_concurrency_limit=1)
     demo.launch(
         theme=gr.themes.Soft(),
-        server_name="127.0.0.1",
+        server_name="0.0.0.0",
         server_port=7860,
-        prevent_thread_lock=True,
+        prevent_thread_lock=False,
         debug=True,
         show_error=True,
     )
-    keep_share_tunnel_alive()
