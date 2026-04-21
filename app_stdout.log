@@ -1,0 +1,13 @@
+* Running on local URL:  http://127.0.0.1:7860
+* Running on public URL: https://4957dc01482dc3e716.gradio.live
+
+This share link expires in 1 week. For free permanent hosting and GPU upgrades, run `gradio deploy` from the terminal in the working directory to deploy to Hugging Face Spaces (https://huggingface.co/spaces)
+Temp directory: C:\Users\Shuvo\AppData\Local\Temp\tmp5yjvpm1w
+Loaded files: 5 | Skipped large files: 0
+Resolved branch: main
+Total chunks: 25
+Loading OpenAI embedding model...
+Index 'code-doc-search-openai' already exists.
+Cleared namespace 'repo-ca494334a7679b69'.
+Storing 25 chunks in Pinecone namespace 'repo-ca494334a7679b69'.
+Ingestion complete. Data has been stored in Pinecone.
