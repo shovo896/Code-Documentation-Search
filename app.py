@@ -33,8 +33,8 @@ with gr.Blocks(title="Code Doc Search", theme=gr.themes.Soft()) as demo:
     btn = gr.Button("Search ", variant="primary")
 
     with gr.Row():
-        answer_box = gr.Textbox(label="📝 Answer", lines=10)
-        source_box = gr.Textbox(label="📂 Sources", lines=10)
+        answer_box = gr.Textbox(label=" Answer", lines=10)
+        source_box = gr.Textbox(label=" Sources", lines=10)
 
     btn.click(
         fn=answer_query,
