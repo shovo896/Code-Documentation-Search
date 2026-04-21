@@ -1,9 +1,8 @@
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import ChatOpenAI
-from langchain.chains import create_retrieval_chain
-from langchain.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
 from dotenv import load_dotenv
 import os
 
@@ -29,13 +28,38 @@ def get_qa_chain():
 Use the following pieces of context to answer the user's question.
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
 
+Context:
 {context}"""
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
-        ("human", "{input}")
+        ("human", "{query}")
     ])
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-    chain = create_retrieval_chain(retriever, prompt | llm | StrOutputParser())
-    return chain
+    
+    def format_docs(docs):
+        return "\n\n".join(doc.page_content for doc in docs)
+
+    chain = (
+        {"context": retriever | format_docs, "query": RunnablePassthrough()}
+        | prompt
+        | llm
+    )
+    
+    # Wrapper to return both result and source documents
+    class QAChain:
+        def __init__(self, retriever, llm_chain):
+            self.retriever = retriever
+            self.llm_chain = llm_chain
+        
+        def invoke(self, inputs):
+            query = inputs.get("query")
+            docs = self.retriever.invoke(query)
+            result = self.llm_chain.invoke({"context": format_docs(docs), "query": query})
+            return {
+                "result": result.content,
+                "source_documents": docs
+            }
+    
+    return QAChain(retriever, chain)
