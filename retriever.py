@@ -51,6 +51,24 @@ Context:
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
+            (
+                "human",
+                "Original question: {original_query}\n"
+                "English search question: {query}\n\n"
+                "Answer the original question in English.",
+            ),
+        ]
+    )
+
+    normalization_prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "Rewrite the user's question as a concise English question for codebase search. "
+                "The user may write in Bengali, romanized Bengali/Banglish, Hindi, or mixed English. "
+                "Preserve technical terms, package names, filenames, and framework names. "
+                "Return only the rewritten English question.",
+            ),
             ("human", "{query}"),
         ]
     )
@@ -70,19 +88,34 @@ Context:
         return "\n\n---\n\n".join(formatted)
 
     chain = prompt | llm
+    normalizer = normalization_prompt | llm
 
     class QAChain:
-        def __init__(self, retriever, llm_chain):
+        def __init__(self, retriever, llm_chain, normalize_chain):
             self.retriever = retriever
             self.llm_chain = llm_chain
+            self.normalize_chain = normalize_chain
 
         def invoke(self, inputs):
-            query = inputs.get("query") if isinstance(inputs, dict) else inputs
+            original_query = inputs.get("query") if isinstance(inputs, dict) else inputs
+            query = original_query
+            try:
+                normalized = self.normalize_chain.invoke({"query": original_query})
+                query = normalized.content.strip() or original_query
+            except Exception:
+                query = original_query
+
             docs = self.retriever.invoke(query)
-            result = self.llm_chain.invoke({"context": format_docs(docs), "query": query})
+            result = self.llm_chain.invoke(
+                {
+                    "context": format_docs(docs),
+                    "query": query,
+                    "original_query": original_query,
+                }
+            )
             return {
                 "result": result.content,
                 "source_documents": docs,
             }
 
-    return QAChain(retriever, chain)
+    return QAChain(retriever, chain, normalizer)
