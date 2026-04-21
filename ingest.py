@@ -24,8 +24,45 @@ MAX_FILE_SIZE_KB = 1500
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 200
 
-ALLOWED_EXTENSIONS = {".py", ".md", ".rst", ".txt", ".js", ".ts", ".java", ".go"}
+ALLOWED_EXTENSIONS = {
+    ".py",
+    ".md",
+    ".rst",
+    ".txt",
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".json",
+    ".html",
+    ".css",
+    ".scss",
+    ".sass",
+    ".less",
+    ".vue",
+    ".svelte",
+    ".java",
+    ".go",
+    ".rs",
+    ".php",
+    ".rb",
+    ".cs",
+    ".cpp",
+    ".c",
+    ".h",
+    ".yml",
+    ".yaml",
+    ".toml",
+}
 SKIP_DIRS = {"node_modules", "__pycache__", ".git", "dist", "build", "venv", ".venv"}
+SKIP_FILES = {
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "bun.lockb",
+    "poetry.lock",
+    "pipfile.lock",
+}
 
 
 def normalize_repo_url(repo_url: str) -> str:
@@ -61,6 +98,9 @@ def should_load(file_path: str) -> bool:
         return False
 
     name = p.name.lower()
+    if name in SKIP_FILES:
+        return False
+
     if "test" in name or "spec" in name:
         return False
 

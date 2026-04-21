@@ -38,8 +38,10 @@ def get_qa_chain(namespace=None, repo_url=None, branch=None):
             repo_context += f"\nBranch: {branch}"
 
     system_prompt = f"""You are a helpful assistant for answering questions about code documentation.
+Always answer in English, even if the user's question is written in another language.
 Use only the following retrieved repository context to answer the user's question.
-If the answer is not in the retrieved context, say that you don't know.
+If the answer is not in the retrieved context, say "I don't know."
+When asked about technologies or frameworks, infer from filenames, file extensions, package manifests, config files, imports, and scripts in the retrieved context.
 {repo_context}
 
 Context:
