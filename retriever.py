@@ -43,6 +43,8 @@ Use only the following retrieved repository context to answer the user's questio
 If the answer is not in the retrieved context, say "I don't know."
 When asked about technologies or frameworks, infer from filenames, file extensions, package manifests, config files, imports, and scripts in the retrieved context.
 Treat .ts and .tsx files as TypeScript evidence, and distinguish that from plain .js or .jsx JavaScript files.
+For yes/no technology questions, give the strongest supported conclusion from the evidence instead of saying "I don't know" when file extensions, dependencies, or config files are enough to answer.
+A repo with package.json, Vite, React, tsconfig.json, .ts, or .tsx files is a JavaScript/TypeScript frontend project; if only TypeScript evidence is present, say it uses TypeScript rather than plain JavaScript.
 {repo_context}
 
 Context:
