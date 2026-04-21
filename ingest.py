@@ -153,7 +153,7 @@ def main():
     else:
         branch = input("Branch নাম (default: main, enter চাপো skip করতে): ").strip() or "main"
 
-    print(f"\n🚀 Starting ingestion for: {repo_url} [{branch}]\n")
+    print(f"\n Starting ingestion for: {repo_url} [{branch}]\n")
 
     # Step 1: Load
     docs = clone_and_load(repo_url, branch)
