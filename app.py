@@ -1,12 +1,18 @@
 import sys
+import secrets
+import time
+from pathlib import Path
 
 import gradio as gr
+from gradio import networking
+from gradio.tunneling import CURRENT_TUNNELS
 
 from ingest import ingest_repository, normalize_repo_url
 from retriever import get_qa_chain
 
 
 chain_cache = {}
+LIVE_URL_FILE = Path("gradio_live_url.txt")
 
 
 def get_cached_chain(repo_info):
@@ -128,6 +134,38 @@ with gr.Blocks(title="Code Doc Search") as demo:
         outputs=[repo_state, status_box, answer_box, source_box],
     )
 
+
+def keep_share_tunnel_alive():
+    while True:
+        try:
+            token = secrets.token_urlsafe(32)
+            url = networking.setup_tunnel(
+                local_host="127.0.0.1",
+                local_port=7860,
+                share_token=token,
+                share_server_address=None,
+                share_server_tls_certificate=None,
+            )
+            LIVE_URL_FILE.write_text(url, encoding="utf-8")
+            print(f"* Running on public URL: {url}", flush=True)
+
+            tunnel = CURRENT_TUNNELS[-1]
+            while tunnel.proc is not None and tunnel.proc.poll() is None:
+                time.sleep(5)
+            print("Public tunnel stopped. Restarting...", flush=True)
+        except Exception as e:
+            print(f"Public tunnel error: {e}", file=sys.stderr, flush=True)
+        time.sleep(5)
+
+
 if __name__ == "__main__":
     demo.queue(default_concurrency_limit=1)
-    demo.launch(theme=gr.themes.Soft(), share=True, debug=True, show_error=True)
+    demo.launch(
+        theme=gr.themes.Soft(),
+        server_name="127.0.0.1",
+        server_port=7860,
+        prevent_thread_lock=True,
+        debug=True,
+        show_error=True,
+    )
+    keep_share_tunnel_alive()
