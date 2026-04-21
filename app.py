@@ -130,4 +130,4 @@ with gr.Blocks(title="Code Doc Search") as demo:
 
 if __name__ == "__main__":
     demo.queue(default_concurrency_limit=1)
-    demo.launch(theme=gr.themes.Soft(), share=True)
+    demo.launch(theme=gr.themes.Soft(), share=True, debug=True, show_error=True)
