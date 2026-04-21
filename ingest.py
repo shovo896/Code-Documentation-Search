@@ -1,14 +1,16 @@
+import hashlib
 import os
-import sys
+import re
 import shutil
+import sys
 import tempfile
 from pathlib import Path
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
 from langchain_community.document_loaders import GitLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pinecone import Pinecone, ServerlessSpec
 
 load_dotenv()
@@ -24,6 +26,27 @@ CHUNK_OVERLAP = 200
 
 ALLOWED_EXTENSIONS = {".py", ".md", ".rst", ".txt", ".js", ".ts", ".java", ".go"}
 SKIP_DIRS = {"node_modules", "__pycache__", ".git", "dist", "build", "venv", ".venv"}
+
+
+def normalize_repo_url(repo_url: str) -> str:
+    """Return a normalized public GitHub repository URL."""
+    repo_url = repo_url.strip().removesuffix("/")
+    repo_url = repo_url.removesuffix(".git")
+
+    match = re.fullmatch(r"https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)", repo_url)
+    if not match:
+        raise ValueError("Please provide a public GitHub repository URL like https://github.com/owner/repo")
+
+    owner, repo = match.groups()
+    return f"https://github.com/{owner}/{repo}"
+
+
+def namespace_for_repo(repo_url: str, branch: str = "main") -> str:
+    """Create a stable Pinecone namespace for a repository and branch."""
+    normalized = normalize_repo_url(repo_url)
+    branch = (branch or "main").strip()
+    digest = hashlib.sha1(f"{normalized}:{branch}".encode("utf-8")).hexdigest()[:16]
+    return f"repo-{digest}"
 
 
 def should_load(file_path: str) -> bool:
@@ -62,18 +85,26 @@ def clone_and_load(repo_url: str, branch: str = "main"):
         skipped = 0
         for doc in docs:
             size_kb = len(doc.page_content.encode("utf-8")) / 1024
-            if size_kb <= MAX_FILE_SIZE_KB:
-                filtered.append(doc)
-            else:
+            if size_kb > MAX_FILE_SIZE_KB:
                 skipped += 1
+                continue
+
+            source = doc.metadata.get("source", "")
+            try:
+                source_path = Path(source).resolve().relative_to(Path(tmp_dir).resolve())
+                doc.metadata["source"] = source_path.as_posix()
+            except (OSError, ValueError):
+                doc.metadata["source"] = str(source).replace("\\", "/")
+
+            filtered.append(doc)
 
         print(f"Loaded files: {len(filtered)} | Skipped large files: {skipped}")
         return filtered
 
     except Exception as e:
-        print(f"Clone failed: {e}")
-        print("If the main branch does not exist, try the master branch.")
-        sys.exit(1)
+        raise RuntimeError(
+            f"Clone failed: {e}. If the main branch does not exist, try the master branch."
+        ) from e
 
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -111,7 +142,17 @@ def setup_pinecone():
     return pc
 
 
-def store_in_pinecone(chunks):
+def clear_namespace(pc: Pinecone, namespace: str) -> None:
+    """Clear existing vectors for a repo namespace before re-ingesting it."""
+    try:
+        index = pc.Index(INDEX_NAME)
+        index.delete(delete_all=True, namespace=namespace)
+        print(f"Cleared namespace '{namespace}'.")
+    except Exception as e:
+        print(f"Namespace clear skipped: {e}")
+
+
+def store_in_pinecone(chunks, namespace: str):
     """Embed chunks with OpenAI and store them in Pinecone."""
     print("Loading OpenAI embedding model...")
     embeddings = OpenAIEmbeddings(
@@ -120,15 +161,43 @@ def store_in_pinecone(chunks):
         api_key=os.environ["OPENAI_API_KEY"],
     )
 
-    setup_pinecone()
+    pc = setup_pinecone()
+    clear_namespace(pc, namespace)
 
-    print(f"Storing {len(chunks)} chunks in Pinecone. This may take a moment...")
+    print(f"Storing {len(chunks)} chunks in Pinecone namespace '{namespace}'.")
     PineconeVectorStore.from_documents(
         chunks,
         embeddings,
         index_name=INDEX_NAME,
+        namespace=namespace,
     )
     print("Ingestion complete. Data has been stored in Pinecone.")
+
+
+def ingest_repository(repo_url: str, branch: str = "main"):
+    """Ingest any public GitHub repository and return the namespace metadata."""
+    repo_url = normalize_repo_url(repo_url)
+    branch = (branch or "main").strip()
+    namespace = namespace_for_repo(repo_url, branch)
+
+    docs = clone_and_load(repo_url, branch)
+    if not docs:
+        raise ValueError("No files were loaded. Check the repository URL or branch name.")
+
+    for doc in docs:
+        doc.metadata["repo_url"] = repo_url
+        doc.metadata["branch"] = branch
+
+    chunks = chunk_documents(docs)
+    store_in_pinecone(chunks, namespace)
+
+    return {
+        "repo_url": repo_url,
+        "branch": branch,
+        "namespace": namespace,
+        "files": len(docs),
+        "chunks": len(chunks),
+    }
 
 
 def main():
@@ -141,10 +210,6 @@ def main():
     else:
         repo_url = input("\nGitHub repo URL:\n(e.g. https://github.com/tiangolo/fastapi): ").strip()
 
-    if not repo_url.startswith("https://github.com/"):
-        print("Please provide the full GitHub URL, for example: https://github.com/username/repo-name")
-        sys.exit(1)
-
     if len(sys.argv) > 2:
         branch = sys.argv[2].strip()
     else:
@@ -152,13 +217,18 @@ def main():
 
     print(f"\nStarting ingestion for: {repo_url} [{branch}]\n")
 
-    docs = clone_and_load(repo_url, branch)
-    if not docs:
-        print("No files were loaded. Check the repository URL or branch name.")
+    try:
+        result = ingest_repository(repo_url, branch)
+    except Exception as e:
+        print(f"Error: {e}")
         sys.exit(1)
 
-    chunks = chunk_documents(docs)
-    store_in_pinecone(chunks)
+    print(
+        "Ingested {files} files into {chunks} chunks for {repo_url} [{branch}].".format(
+            **result
+        )
+    )
+    print(f"Namespace: {result['namespace']}")
 
 
 if __name__ == "__main__":
