@@ -42,6 +42,7 @@ Always answer in English, even if the user's question is written in another lang
 Use only the following retrieved repository context to answer the user's question.
 If the answer is not in the retrieved context, say "I don't know."
 When asked about technologies or frameworks, infer from filenames, file extensions, package manifests, config files, imports, and scripts in the retrieved context.
+Treat .ts and .tsx files as TypeScript evidence, and distinguish that from plain .js or .jsx JavaScript files.
 {repo_context}
 
 Context:
@@ -54,10 +55,19 @@ Context:
         ]
     )
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 8})
 
     def format_docs(docs):
-        return "\n\n".join(doc.page_content for doc in docs)
+        formatted = []
+        for doc in docs:
+            source = doc.metadata.get("source", "unknown")
+            file_type = doc.metadata.get("file_type", "")
+            formatted.append(
+                f"Source: {source}\n"
+                f"File type: {file_type}\n"
+                f"Content:\n{doc.page_content}"
+            )
+        return "\n\n---\n\n".join(formatted)
 
     chain = prompt | llm
 
