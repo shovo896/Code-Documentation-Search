@@ -211,26 +211,26 @@ def store_in_pinecone(chunks, namespace: str):
     print("Ingestion complete. Data has been stored in Pinecone.")
 
 
-def ingest_repository(repo_url: str, branch: str = "main"):
+def ingest_repository(repo_url: str, branch: str = ""):
     """Ingest any public GitHub repository and return the namespace metadata."""
     repo_url = normalize_repo_url(repo_url)
-    branch = (branch or "main").strip()
-    namespace = namespace_for_repo(repo_url, branch)
+    requested_branch = (branch or "").strip()
 
-    docs = clone_and_load(repo_url, branch)
+    docs, resolved_branch = clone_and_load(repo_url, requested_branch)
     if not docs:
         raise ValueError("No files were loaded. Check the repository URL or branch name.")
 
     for doc in docs:
         doc.metadata["repo_url"] = repo_url
-        doc.metadata["branch"] = branch
+        doc.metadata["branch"] = resolved_branch
 
     chunks = chunk_documents(docs)
+    namespace = namespace_for_repo(repo_url, resolved_branch)
     store_in_pinecone(chunks, namespace)
 
     return {
         "repo_url": repo_url,
-        "branch": branch,
+        "branch": resolved_branch,
         "namespace": namespace,
         "files": len(docs),
         "chunks": len(chunks),
@@ -250,7 +250,7 @@ def main():
     if len(sys.argv) > 2:
         branch = sys.argv[2].strip()
     else:
-        branch = input("Branch name (default: main, press Enter to skip): ").strip() or "main"
+        branch = input("Branch name (press Enter to use the default branch): ").strip()
 
     print(f"\nStarting ingestion for: {repo_url} [{branch}]\n")
 

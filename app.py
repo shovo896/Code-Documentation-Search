@@ -2,7 +2,7 @@ import sys
 
 import gradio as gr
 
-from ingest import ingest_repository, namespace_for_repo, normalize_repo_url
+from ingest import ingest_repository, normalize_repo_url
 from retriever import get_qa_chain
 
 
@@ -32,7 +32,7 @@ def format_status(repo_info):
 def load_repository(repo_url, branch):
     try:
         repo_url = normalize_repo_url(repo_url)
-        branch = (branch or "main").strip()
+        branch = (branch or "").strip()
         repo_info = ingest_repository(repo_url, branch)
         chain_cache.pop(repo_info["namespace"], None)
         get_cached_chain(repo_info)
@@ -51,10 +51,14 @@ def answer_query(repo_url, branch, question, repo_state):
 
     try:
         repo_url = normalize_repo_url(repo_url)
-        branch = (branch or "main").strip()
-        namespace = namespace_for_repo(repo_url, branch)
+        branch = (branch or "").strip()
+        state_matches = (
+            repo_state
+            and repo_state.get("repo_url") == repo_url
+            and (not branch or repo_state.get("branch") == branch)
+        )
 
-        if not repo_state or repo_state.get("namespace") != namespace:
+        if not state_matches:
             repo_state = ingest_repository(repo_url, branch)
             chain_cache.pop(repo_state["namespace"], None)
 
@@ -89,8 +93,8 @@ with gr.Blocks(title="Code Doc Search") as demo:
 
     branch = gr.Textbox(
         label="Branch",
-        value="main",
-        placeholder="main",
+        value="",
+        placeholder="Leave empty to use the repository default branch",
         lines=1,
     )
 
