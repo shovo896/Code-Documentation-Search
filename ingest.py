@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 from langchain_community.document_loaders import GitLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
 
@@ -15,9 +15,9 @@ load_dotenv()
 
 
 PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
-INDEX_NAME       = "code-doc-search"
-EMBED_MODEL      = "sentence-transformers/all-MiniLM-L6-v2"
-EMBED_DIM        = 384
+INDEX_NAME       = "code-doc-search-openai"
+EMBED_MODEL      = "text-embedding-3-small"
+EMBED_DIM        = 1536
 MAX_FILE_SIZE_KB = 1500      
 CHUNK_SIZE       = 1000
 CHUNK_OVERLAP    = 200
@@ -118,8 +118,12 @@ def setup_pinecone():
 
 def store_in_pinecone(chunks):
     """Embed করে Pinecone এ store করো"""
-    print(" Loading embedding model...")
-    embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
+    print(" Loading OpenAI embedding model...")
+    embeddings = OpenAIEmbeddings(
+        model=EMBED_MODEL,
+        dimensions=EMBED_DIM,
+        api_key=os.environ["OPENAI_API_KEY"],
+    )
 
     setup_pinecone()
 

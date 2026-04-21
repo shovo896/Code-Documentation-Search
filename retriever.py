@@ -1,6 +1,5 @@
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 import os
@@ -8,12 +7,14 @@ import os
 load_dotenv()
 
 def get_qa_chain():
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = OpenAIEmbeddings(
+        model="text-embedding-3-small",
+        dimensions=1536,
+        api_key=os.environ["OPENAI_API_KEY"],
     )
 
     vectorstore = PineconeVectorStore(
-        index_name="code-doc-search",
+        index_name="code-doc-search-openai",
         embedding=embeddings
     )
 

@@ -3,7 +3,6 @@ langchain-community
 langchain-pinecone
 langchain-openai
 pinecone-client
-sentence-transformers
 gradio
 PyGithub
 python-dotenv
