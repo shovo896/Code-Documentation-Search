@@ -7,9 +7,9 @@ try:
     chain = get_qa_chain()
     print(" Ready!")
 except Exception as e:
-    print(f"\n❌ Error: {str(e)}")
+    print(f"\n Error: {str(e)}")
     if "NOT_FOUND" in str(e) or "code-doc-search not found" in str(e):
-        print("\n⚠️  Pinecone index 'code-doc-search' not found!")
+        print("\n  Pinecone index 'code-doc-search' not found!")
         print("\nPlease run ingest.py first to populate the index:")
         print("   python ingest.py <GITHUB_REPO_URL> [BRANCH]")
         print("\nExample:")
