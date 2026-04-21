@@ -1,6 +1,0 @@
- Loading model...
- Ready!
-* Running on local URL:  http://127.0.0.1:7860
-* Running on public URL: https://3090c2e3ef68343a59.gradio.live
-
-This share link expires in 1 week. For free permanent hosting and GPU upgrades, run `gradio deploy` from the terminal in the working directory to deploy to Hugging Face Spaces (https://huggingface.co/spaces)
