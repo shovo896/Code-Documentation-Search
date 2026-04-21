@@ -186,7 +186,10 @@ def clear_namespace(pc: Pinecone, namespace: str) -> None:
         index.delete(delete_all=True, namespace=namespace)
         print(f"Cleared namespace '{namespace}'.")
     except Exception as e:
-        print(f"Namespace clear skipped: {e}")
+        if "Namespace not found" in str(e):
+            print(f"No existing namespace found for '{namespace}'.")
+        else:
+            print(f"Namespace clear skipped: {e}")
 
 
 def store_in_pinecone(chunks, namespace: str):
