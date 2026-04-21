@@ -51,12 +51,7 @@ Context:
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", system_prompt),
-            (
-                "human",
-                "Original question: {original_query}\n"
-                "English search question: {query}\n\n"
-                "Answer the original question in English.",
-            ),
+            ("human", "{query}"),
         ]
     )
 
@@ -110,7 +105,6 @@ Context:
                 {
                     "context": format_docs(docs),
                     "query": query,
-                    "original_query": original_query,
                 }
             )
             return {
