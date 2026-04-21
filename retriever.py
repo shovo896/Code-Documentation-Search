@@ -12,11 +12,18 @@ EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1536
 
 
+def get_required_env(name: str) -> str:
+    value = os.getenv(name, "").strip().strip('"').strip("'")
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
 def get_qa_chain(namespace=None, repo_url=None, branch=None):
     embeddings = OpenAIEmbeddings(
         model=EMBED_MODEL,
         dimensions=EMBED_DIM,
-        api_key=os.environ["OPENAI_API_KEY"],
+        api_key=get_required_env("OPENAI_API_KEY"),
     )
 
     vectorstore = PineconeVectorStore(
@@ -27,7 +34,7 @@ def get_qa_chain(namespace=None, repo_url=None, branch=None):
 
     llm = ChatOpenAI(
         model_name="gpt-4o-mini",
-        api_key=os.environ["OPENAI_API_KEY"],
+        api_key=get_required_env("OPENAI_API_KEY"),
         temperature=0.2,
     )
 

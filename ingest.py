@@ -16,7 +16,14 @@ from pinecone import Pinecone, ServerlessSpec
 load_dotenv()
 
 
-PINECONE_API_KEY = os.environ["PINECONE_API_KEY"]
+def get_required_env(name: str) -> str:
+    value = os.getenv(name, "").strip().strip('"').strip("'")
+    if not value:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return value
+
+
+PINECONE_API_KEY = get_required_env("PINECONE_API_KEY")
 INDEX_NAME = "code-doc-search-openai"
 EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1536
@@ -238,7 +245,7 @@ def store_in_pinecone(chunks, namespace: str):
     embeddings = OpenAIEmbeddings(
         model=EMBED_MODEL,
         dimensions=EMBED_DIM,
-        api_key=os.environ["OPENAI_API_KEY"],
+        api_key=get_required_env("OPENAI_API_KEY"),
     )
 
     pc = setup_pinecone()
