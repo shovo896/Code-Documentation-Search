@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
-from langchain_community.document_loaders import GitLoader
+from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -41,10 +41,10 @@ def normalize_repo_url(repo_url: str) -> str:
     return f"https://github.com/{owner}/{repo}"
 
 
-def namespace_for_repo(repo_url: str, branch: str = "main") -> str:
+def namespace_for_repo(repo_url: str, branch: str) -> str:
     """Create a stable Pinecone namespace for a repository and branch."""
     normalized = normalize_repo_url(repo_url)
-    branch = (branch or "main").strip()
+    branch = branch.strip()
     digest = hashlib.sha1(f"{normalized}:{branch}".encode("utf-8")).hexdigest()[:16]
     return f"repo-{digest}"
 
@@ -67,19 +67,55 @@ def should_load(file_path: str) -> bool:
     return True
 
 
-def clone_and_load(repo_url: str, branch: str = "main"):
+def clone_and_load(repo_url: str, branch: str = ""):
     """Clone the GitHub repository and load relevant files as documents."""
     tmp_dir = tempfile.mkdtemp()
     print(f"Temp directory: {tmp_dir}")
 
     try:
-        loader = GitLoader(
-            clone_url=repo_url,
-            repo_path=tmp_dir,
-            branch=branch,
-            file_filter=should_load,
-        )
-        docs = loader.load()
+        from git import Blob, Repo
+
+        repo = Repo.clone_from(repo_url, tmp_dir)
+        requested_branch = (branch or "").strip()
+        if requested_branch:
+            repo.git.checkout(requested_branch)
+
+        try:
+            resolved_branch = repo.active_branch.name
+        except TypeError:
+            resolved_branch = repo.git.rev_parse("--abbrev-ref", "HEAD")
+
+        docs = []
+        for item in repo.tree().traverse():
+            if not isinstance(item, Blob):
+                continue
+
+            file_path = os.path.join(tmp_dir, item.path)
+            if repo.ignored([file_path]):
+                continue
+
+            if not should_load(file_path):
+                continue
+
+            try:
+                with open(file_path, "rb") as f:
+                    content = f.read()
+                    text_content = content.decode("utf-8")
+            except UnicodeDecodeError:
+                continue
+
+            file_type = os.path.splitext(item.name)[1]
+            docs.append(
+                Document(
+                    page_content=text_content,
+                    metadata={
+                        "source": item.path,
+                        "file_path": item.path,
+                        "file_name": item.name,
+                        "file_type": file_type,
+                    },
+                )
+            )
 
         filtered = []
         skipped = 0
@@ -99,11 +135,12 @@ def clone_and_load(repo_url: str, branch: str = "main"):
             filtered.append(doc)
 
         print(f"Loaded files: {len(filtered)} | Skipped large files: {skipped}")
-        return filtered
+        print(f"Resolved branch: {resolved_branch}")
+        return filtered, resolved_branch
 
     except Exception as e:
         raise RuntimeError(
-            f"Clone failed: {e}. If the main branch does not exist, try the master branch."
+            f"Clone failed: {e}. Check that the repository is public and the branch exists."
         ) from e
 
     finally:
