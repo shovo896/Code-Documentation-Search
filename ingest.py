@@ -102,34 +102,34 @@ def setup_pinecone():
     existing = [i.name for i in pc.list_indexes()]
 
     if INDEX_NAME not in existing:
-        print(f"⏳ Creating Pinecone index '{INDEX_NAME}'...")
+        print(f" Creating Pinecone index '{INDEX_NAME}'...")
         pc.create_index(
             name=INDEX_NAME,
             dimension=EMBED_DIM,
             metric="cosine",
             spec=ServerlessSpec(cloud="aws", region="us-east-1"),
         )
-        print("✅ Index created")
+        print(" Index created")
     else:
-        print(f"✅ Index '{INDEX_NAME}' already exists")
+        print(f" Index '{INDEX_NAME}' already exists")
 
     return pc
 
 
 def store_in_pinecone(chunks):
     """Embed করে Pinecone এ store করো"""
-    print("⏳ Loading embedding model...")
+    print(" Loading embedding model...")
     embeddings = HuggingFaceEmbeddings(model_name=EMBED_MODEL)
 
     setup_pinecone()
 
-    print(f"⏳ Storing {len(chunks)} chunks in Pinecone (এটু সময় লাগবে)...")
+    print(f" Storing {len(chunks)} chunks in Pinecone (এটু সময় লাগবে)...")
     PineconeVectorStore.from_documents(
         chunks,
         embeddings,
         index_name=INDEX_NAME,
     )
-    print("🎉 Ingestion complete! Pinecone এ data store হয়ে গেছে।")
+    print(" Ingestion complete! Pinecone এ data store হয়ে গেছে।")
 
 
 def main():
@@ -141,10 +141,10 @@ def main():
     if len(sys.argv) > 1:
         repo_url = sys.argv[1].strip()
     else:
-        repo_url = input("\nGitHub repo URL দাও\n(e.g. https://github.com/tiangolo/fastapi): ").strip()
+        repo_url = input("\nGitHub repo URL :\n(e.g. https://github.com/tiangolo/fastapi): ").strip()
 
     if not repo_url.startswith("https://github.com/"):
-        print("❌ Full URL দাও — https://github.com/username/repo-name")
+        print("Full URL দাও — https://github.com/username/repo-name")
         sys.exit(1)
 
     # Get branch from command-line arg or interactive input
@@ -158,7 +158,7 @@ def main():
     # Step 1: Load
     docs = clone_and_load(repo_url, branch)
     if not docs:
-        print("❌ কোনো ফাইল load হয়নি। Repo URL বা branch চেক করো।")
+        print(" No files loaded. Check Repo URL or branch.")
         sys.exit(1)
 
     # Step 2: Chunk
