@@ -2,7 +2,6 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.runnables import RunnablePassthrough
 from dotenv import load_dotenv
 import os
 
@@ -41,11 +40,7 @@ Context:
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-    chain = (
-        {"context": retriever | format_docs, "query": RunnablePassthrough()}
-        | prompt
-        | llm
-    )
+    chain = prompt | llm
     
     # Wrapper to return both result and source documents
     class QAChain:
@@ -54,7 +49,7 @@ Context:
             self.llm_chain = llm_chain
         
         def invoke(self, inputs):
-            query = inputs.get("query")
+            query = inputs.get("query") if isinstance(inputs, dict) else inputs
             docs = self.retriever.invoke(query)
             result = self.llm_chain.invoke({"context": format_docs(docs), "query": query})
             return {

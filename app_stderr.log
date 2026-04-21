@@ -1,7 +1,7 @@
-E:\Code Documentation Search\retriever.py:12: LangChainDeprecationWarning: The class `HuggingFaceEmbeddings` was deprecated in LangChain 0.2.2 and will be removed in 1.0. An updated version of the class exists in the `langchain-huggingface package and should be used instead. To use it run `pip install -U `langchain-huggingface` and import as `from `langchain_huggingface import HuggingFaceEmbeddings``.
+E:\Code Documentation Search\retriever.py:11: LangChainDeprecationWarning: The class `HuggingFaceEmbeddings` was deprecated in LangChain 0.2.2 and will be removed in 1.0. An updated version of the class exists in the `langchain-huggingface package and should be used instead. To use it run `pip install -U `langchain-huggingface` and import as `from `langchain_huggingface import HuggingFaceEmbeddings``.
   embeddings = HuggingFaceEmbeddings(
 Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 14656.94it/s]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 16117.49it/s]
 [1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
 Key                     | Status     |  | 
 ------------------------+------------+--+-
@@ -9,96 +9,3 @@ embeddings.position_ids | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-E:\Code Documentation Search\app.py:34: UserWarning: The parameters have been moved from the Blocks constructor to the launch() method in Gradio 6.0: theme. Please pass these parameters to launch() instead.
-  with gr.Blocks(title="Code Doc Search", theme=gr.themes.Soft()) as demo:
-Traceback (most recent call last):
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\gradio\queueing.py", line 856, in process_events
-    response = await route_utils.call_process_api(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<5 lines>...
-    )
-    ^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\gradio\route_utils.py", line 374, in call_process_api
-    output = await app.get_blocks().process_api(
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<11 lines>...
-    )
-    ^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\gradio\blocks.py", line 2179, in process_api
-    result = await self.call_function(
-             ^^^^^^^^^^^^^^^^^^^^^^^^^
-    ...<8 lines>...
-    )
-    ^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\gradio\blocks.py", line 1636, in call_function
-    prediction = await anyio.to_thread.run_sync(  # type: ignore
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        fn, *processed_input, limiter=self.limiter
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\anyio\to_thread.py", line 63, in run_sync
-    return await get_async_backend().run_sync_in_worker_thread(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        func, args, abandon_on_cancel=abandon_on_cancel, limiter=limiter
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    )
-    ^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2518, in run_sync_in_worker_thread
-    return await future
-           ^^^^^^^^^^^^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1002, in run
-    result = context.run(func, *args)
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\gradio\utils.py", line 1060, in wrapper
-    response = f(*args, **kwargs)
-  File "E:\Code Documentation Search\app.py", line 23, in answer_query
-    result = chain.invoke({"query": question})
-  File "E:\Code Documentation Search\retriever.py", line 59, in invoke
-    result = self.llm_chain.invoke({"context": format_docs(docs), "query": query})
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_core\runnables\base.py", line 3155, in invoke
-    input_ = context.run(step.invoke, input_, config, **kwargs)
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_core\runnables\base.py", line 3882, in invoke
-    key: future.result()
-         ~~~~~~~~~~~~~^^
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\Lib\concurrent\futures\_base.py", line 449, in result
-    return self.__get_result()
-           ~~~~~~~~~~~~~~~~~^^
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\Lib\concurrent\futures\_base.py", line 401, in __get_result
-    raise self._exception
-  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3568.0_x64__qbz5n2kfra8p0\Lib\concurrent\futures\thread.py", line 59, in run
-    result = self.fn(*self.args, **self.kwargs)
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_core\runnables\base.py", line 3865, in _invoke_step
-    return context.run(
-           ~~~~~~~~~~~^
-        step.invoke,
-        ^^^^^^^^^^^^
-        input_,
-        ^^^^^^^
-        child_config,
-        ^^^^^^^^^^^^^
-    )
-    ^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_core\runnables\base.py", line 3155, in invoke
-    input_ = context.run(step.invoke, input_, config, **kwargs)
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_core\retrievers.py", line 222, in invoke
-    result = self._get_relevant_documents(
-        input, run_manager=run_manager, **kwargs_
-    )
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_core\vectorstores\base.py", line 1045, in _get_relevant_documents
-    docs = self.vectorstore.similarity_search(query, **kwargs_)
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_pinecone\vectorstores.py", line 676, in similarity_search
-    docs_and_scores = self.similarity_search_with_score(
-        query, k=k, filter=filter, namespace=namespace, **kwargs
-    )
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_pinecone\vectorstores.py", line 543, in similarity_search_with_score
-    self._embedding.embed_query(query),
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_community\embeddings\huggingface.py", line 130, in embed_query
-    return self.embed_documents([text])[0]
-           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_community\embeddings\huggingface.py", line 109, in embed_documents
-    texts = list(map(lambda x: x.replace("\n", " "), texts))
-  File "E:\Code Documentation Search\.venv\Lib\site-packages\langchain_community\embeddings\huggingface.py", line 109, in <lambda>
-    texts = list(map(lambda x: x.replace("\n", " "), texts))
-                               ^^^^^^^^^
-AttributeError: 'dict' object has no attribute 'replace'

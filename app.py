@@ -20,8 +20,12 @@ def answer_query(question):
     if not question.strip():
         return "Write Question:", ""
 
-    result = chain.invoke({"query": question})
-    answer = result["result"]
+    try:
+        result = chain.invoke({"query": question})
+        answer = result["result"]
+    except Exception as e:
+        print(f" Query error: {e}", file=sys.stderr)
+        return f"Error: {e}", ""
 
     sources = set()
     for doc in result["source_documents"]:
@@ -31,7 +35,7 @@ def answer_query(question):
     source_text = "\n".join([f" {s}" for s in sources])
     return answer, source_text
 
-with gr.Blocks(title="Code Doc Search", theme=gr.themes.Soft()) as demo:
+with gr.Blocks(title="Code Doc Search") as demo:
     gr.Markdown("Code Documentation Search")
     gr.Markdown("Ask any question about your codebase and get instant answers, powered by LLMs and Pinecone vector search!")
 
@@ -53,4 +57,4 @@ with gr.Blocks(title="Code Doc Search", theme=gr.themes.Soft()) as demo:
         outputs=[answer_box, source_box]
     )
 
-demo.launch()
+demo.launch(theme=gr.themes.Soft(), share=True)

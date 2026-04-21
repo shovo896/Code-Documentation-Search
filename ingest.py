@@ -92,7 +92,7 @@ def chunk_documents(docs):
         separators=["\nclass ", "\ndef ", "\n\n", "\n", " ", ""],
     )
     chunks = splitter.split_documents(docs)
-    print(f"✅ Total chunks: {len(chunks)}")
+    print(f" Total chunks: {len(chunks)}")
     return chunks
 
 
