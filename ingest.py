@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from langchain_community.document_loaders import GitLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone, ServerlessSpec
@@ -137,13 +137,21 @@ def main():
     print("   Code Documentation Search — Ingestion")
     print("=" * 50)
 
-    repo_url = input("\nGitHub repo URL দাও\n(e.g. https://github.com/tiangolo/fastapi): ").strip()
+    # Get repo_url from command-line arg or interactive input
+    if len(sys.argv) > 1:
+        repo_url = sys.argv[1].strip()
+    else:
+        repo_url = input("\nGitHub repo URL দাও\n(e.g. https://github.com/tiangolo/fastapi): ").strip()
 
     if not repo_url.startswith("https://github.com/"):
         print("❌ Full URL দাও — https://github.com/username/repo-name")
         sys.exit(1)
 
-    branch = input("Branch নাম (default: main, enter চাপো skip করতে): ").strip() or "main"
+    # Get branch from command-line arg or interactive input
+    if len(sys.argv) > 2:
+        branch = sys.argv[2].strip()
+    else:
+        branch = input("Branch নাম (default: main, enter চাপো skip করতে): ").strip() or "main"
 
     print(f"\n🚀 Starting ingestion for: {repo_url} [{branch}]\n")
 
